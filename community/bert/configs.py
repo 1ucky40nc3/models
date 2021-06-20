@@ -28,6 +28,7 @@ class BertConfig(object):
                vocab_size,
                hidden_size=768,
                num_hidden_layers=12,
+               attention_layer=None,
                num_attention_heads=12,
                intermediate_size=3072,
                hidden_act="gelu",
@@ -68,6 +69,7 @@ class BertConfig(object):
     self.vocab_size = vocab_size
     self.hidden_size = hidden_size
     self.num_hidden_layers = num_hidden_layers
+    self.attention_layer = attention_layer
     self.num_attention_heads = num_attention_heads
     self.hidden_act = hidden_act
     self.intermediate_size = intermediate_size

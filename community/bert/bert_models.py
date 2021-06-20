@@ -129,6 +129,7 @@ def get_transformer_encoder(bert_config,
         dropout_rate=bert_config.hidden_dropout_prob,
     )
     hidden_cfg = dict(
+        attention_laye=bert_config.attention_layer,
         num_attention_heads=bert_config.num_attention_heads,
         intermediate_size=bert_config.intermediate_size,
         intermediate_activation=tf_utils.get_activation(bert_config.hidden_act),
