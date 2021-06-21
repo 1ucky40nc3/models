@@ -24,12 +24,20 @@ class TransformerEncoderBlock(tf.keras.layers.Layer):
   This layer implements the Transformer Encoder from
   "Attention Is All You Need". (https://arxiv.org/abs/1706.03762),
   which combines a `tf.keras.layers.MultiHeadAttention` layer with a
-  two-layer feedforward network.
+  two-layer feedforward network. Modifications have been made to 
+  allow attention other layers in addition to MultiHeadAttention.
+  Examples are the fourier mixing sublayer proposed in 
+  "FNet: Mixing Tokens with Fourier Transforms" (https://arxiv.org/pdf/2105.03824v1.pdf),
+  as well as Fast Attention via the FAVOR+ Algorithm from
+  "Rethinking Attention with Performers" (https://arxiv.org/pdf/2009.14794.pdf).
 
   References:
     [Attention Is All You Need](https://arxiv.org/abs/1706.03762)
     [BERT: Pre-training of Deep Bidirectional Transformers for Language
      Understanding](https://arxiv.org/abs/1810.04805)
+    [FNet: Mixing Tokens with Fourier Transforms]
+      (https://arxiv.org/pdf/2105.03824v1.pdf)
+    [Rethinking Attention with Performers](https://arxiv.org/pdf/2009.14794.pdf)
   """
 
   def __init__(self,
@@ -50,6 +58,7 @@ class TransformerEncoderBlock(tf.keras.layers.Layer):
                output_dropout=0.0,
                attention_dropout=0.0,
                inner_dropout=0.0,
+               attention_layer=tf.keras.layers.MultiHeadAttention,
                attention_initializer=None,
                attention_axes=None,
                **kwargs):
@@ -81,6 +90,8 @@ class TransformerEncoderBlock(tf.keras.layers.Layer):
       attention_dropout: Dropout probability for within the attention layer.
       inner_dropout: Dropout probability for the first Dense layer in a
         two-layer feedforward network.
+      attention_layer: Attention layer. Such as MultiHeadAttention,
+        FourierMixingSublayer or FastAttention
       attention_initializer: Initializer for kernels of attention layers. If set
         `None`, attention layers use kernel_initializer as initializer for
         kernel.
@@ -109,6 +120,7 @@ class TransformerEncoderBlock(tf.keras.layers.Layer):
     self._norm_first = norm_first
     self._norm_epsilon = norm_epsilon
     self._inner_dropout = inner_dropout
+    self._attention_layer = attention_layer
     if attention_initializer:
       self._attention_initializer = tf.keras.initializers.get(
           attention_initializer)
@@ -141,7 +153,7 @@ class TransformerEncoderBlock(tf.keras.layers.Layer):
         activity_regularizer=self._activity_regularizer,
         kernel_constraint=self._kernel_constraint,
         bias_constraint=self._bias_constraint)
-    self._attention_layer = tf.keras.layers.MultiHeadAttention(
+    self._attention_layer = self._attention_layer(
         num_heads=self._num_heads,
         key_dim=self._attention_head_size,
         dropout=self._attention_dropout,
